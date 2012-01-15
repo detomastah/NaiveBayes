@@ -1,17 +1,58 @@
 #include "NaiveBayes.h"
 #include <iostream>
 #include <cstdio>
+#include <boost/lexical_cast.hpp>
 
-void NaiveBayes::setTrainSet(Data *trainSet) { this->trainSet = trainSet; }
+std::string inspect(std::vector<float> &v)
+{
+	std::string retVal = std::string("[");
+	for (std::vector<float>::iterator it = v.begin(); it != v.end(); it++)
+		retVal += boost::lexical_cast<std::string>(*it) + ", ";
+	return retVal + std::string("]");
+}
+
+std::string inspect(StrValuesMap &map) 
+{
+	std::string retVal = "(";
+	for (StrValuesMap::iterator it = map.begin(); it != map.end(); it++)
+	{
+		retVal += std::string("A") + std::string(": ") + inspect(it->second) + ", ";
+	}
+	return retVal + ")";
+}
+
+std::string inspect(StrFloatMap &map) 
+{
+	std::string retVal = "(";
+	for (StrFloatMap::iterator it = map.begin(); it != map.end(); it++)
+	{
+		retVal += it->first + ": " + boost::lexical_cast<std::string>(it->second); + ", ";
+	}
+	return retVal + ")";
+}
+
+void NaiveBayes::setTestSet(Data *testSet) 
+{
+	this->testSet = testSet; 
+}
 
 void NaiveBayes::setModel(ProbabilityModel *model) 
 {
 	 this->model = model;
-	 this->model->setTrainSet(this->trainSet);
 }
 
-void NaiveBayes::train()
+void NaiveBayes::eval()
 {
+}
+
+void ProbabilityModel::setTrainSet(Data *trainSet) 
+{
+	this->trainSet = trainSet;
+}
+
+void ProbabilityModel::train()
+{
+
 	//zliczanie ilości rekordów o danej klasie
 	float rowCount = 0.0f;
 	for (Data::iterator rowIt = trainSet->begin(); rowIt != trainSet->end() ; rowIt++)
@@ -23,19 +64,20 @@ void NaiveBayes::train()
 			labelProbs[row.getLabel()] += 1.0f;
 		rowCount += 1.0f;
 	}
-	
+
 	for (StrFloatMap::iterator it=labelProbs.begin() ; it != labelProbs.end(); it++)
 	{
 		(*it).second = (*it).second / rowCount;
 		//std::cout << (*it).second << "\n";
 	}
-	
-	model->train();
+
+	trainModel();
 }
 
-void NormalModel::train() 
+void NormalModel::trainModel() 
 {
 	StrFloatMap labelCounts;
+	StrValuesMap sums;
 	float rowCount = 0.0f;
 	//zliczamy sumy kolumnowo dla każdej z klas
 	for (Data::iterator rowIt = trainSet->begin(); rowIt != trainSet->end() ; rowIt++)
@@ -44,23 +86,36 @@ void NormalModel::train()
 		if (labelCounts.find(row.getLabel()) == labelCounts.end())
 		{
 			labelCounts[row.getLabel()] = 1.0f;
-			averages[row.getLabel()] = std::vector<float>(row.getValues());
+			sums[row.getLabel()] = std::vector<float>(row.getValues());
 		}
 		else
 		{
 			labelCounts[row.getLabel()] += 1.0f;
 			for (int i=0; i < row.getValues().size(); i++)
 			{
-				averages[row.getLabel()][i] += row.getValues()[i];
+				sums[row.getLabel()][i] += row.getValues()[i];
 			}
 		}
 		rowCount += 1.0f;
 	}
 	
 	//dzielimy sumy  przez ilość wierszy danej klasy
-	for (StrValuesMap::iterator it = averages.begin(); it != averages.end(); it++)
+	for (StrValuesMap::iterator it = sums.begin(); it != sums.end(); it++)
+	{
+		averages[it->first] = std::vector<float>(it->second.size());
 		for (int i=0; i < it->second.size(); i++)
-					averages[it->first][i] /= labelCounts[it->first];
+			averages[it->first][i] = sums[it->first][i] / labelCounts[it->first];
+	}
+			
+	//obliczamy wariancję
+	for (StrValuesMap::iterator it = sums.begin(); it != sums.end(); it++)
+	{
+		variances[it->first] = std::vector<float>(it->second.size());
+		for (int i=0; i < it->second.size(); i++)
+			variances[it->first][i] = (sums[it->first][i] - labelCounts[it->first] * averages[it->first][i]) / labelCounts[it->first];
+	}
+	std::cout << inspect(variances) << std::endl;
+	std::cout << inspect(averages) << std::endl;
 }
 
 float NormalModel::getProbability(DataRow *dp, std::string label)

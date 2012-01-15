@@ -15,31 +15,32 @@ typedef std::map<std::string, std::vector<float> > StrValuesMap;
 class NaiveBayes
 {
 public:
-	void setTrainSet(Data *trainSet);
+	void setTestSet(Data *testSet);
 	void setModel(ProbabilityModel *model);
-	void train();
+	void eval();
 private:
-	Data *trainSet;
+	Data *testSet;
 	ProbabilityModel *model;
-	StrFloatMap labelProbs;
 };
 
 class ProbabilityModel
 {
 public:
-	void setTrainSet(Data *trainSet) { this->trainSet = trainSet; };
-	virtual void train() = 0;
+	void setTrainSet(Data *trainSet);
+	void train();
 	virtual float getProbability(DataRow *dp, std::string label) = 0;
 protected:
+	virtual void trainModel() = 0;
 	Data *trainSet;
+	StrFloatMap labelProbs;
 };
 
 class NormalModel : public ProbabilityModel
 {
 public:
-	virtual void train();
 	virtual float getProbability(DataRow *dp, std::string label);
 protected:
+	virtual void trainModel();
 	StrValuesMap variances;
 	StrValuesMap averages;
 };

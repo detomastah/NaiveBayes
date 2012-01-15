@@ -38,9 +38,10 @@ int main()
 	
 	NormalModel nm;
 	NaiveBayes nb;
-	nb.setTrainSet(d);
+	nm.setTrainSet(d);
+	nm.train();
 	nb.setModel(&nm);
-	nb.train();
+	nb.eval();
 
 	//d.addRow(L1,s1);
 	//d.addRow(L2,s2);
