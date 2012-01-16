@@ -33,7 +33,7 @@ Data* ReaderCSV::read(std::istream& dataSource)
 	Data* temp = new Data();
 	while(std::getline(dataSource,line))
 	{
-		std::cout<<line<<std::endl;
+		//std::cout<<line<<std::endl;
 		char_separator<char> sep(", ");
 		tokenizer <char_separator<char> > tokens(line, sep);
 		tokenizer <char_separator<char> >::iterator tok_iter_2 = tokens.begin();

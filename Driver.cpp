@@ -10,6 +10,7 @@
 #include "ReaderCSV.h"
 #include "NaiveBayes.h"
 
+/*
 using namespace std;
 typedef std::pair <std::list<float>, std::string > dataPair;
 int main()
@@ -63,7 +64,7 @@ int main()
 
 
 
-
+*/
 
 
 
