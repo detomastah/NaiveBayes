@@ -15,7 +15,6 @@
 class Reader;
 class DataRow;
 
-typedef std::pair <std::list<float>, std::string > dataPair;
 typedef std::list<DataRow>::iterator DataRowIterator;
 
 class DataRow

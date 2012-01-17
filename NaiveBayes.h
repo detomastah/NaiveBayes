@@ -10,6 +10,7 @@ class DataRow;
 class ProbabilityModel;
 
 typedef std::map<std::string, float> StrFloatMap;
+typedef std::vector<std::string> StrVector;
 typedef std::map<std::string, std::vector<float> > StrValuesMap;
 
 class NaiveBayes
@@ -28,9 +29,11 @@ class ProbabilityModel
 public:
 	void setTrainSet(Data *trainSet);
 	void train();
-	virtual float getProbability(DataRow *dp, std::string label) = 0;
+	StrVector getLabels();
+	virtual float getProbability(DataRow *dp, std::string label);
 protected:
 	virtual void trainModel() = 0;
+	virtual float getModelProbability(DataRow *dp, std::string label) = 0;
 	Data *trainSet;
 	StrFloatMap labelProbs;
 };
@@ -38,7 +41,7 @@ protected:
 class NormalModel : public ProbabilityModel
 {
 public:
-	virtual float getProbability(DataRow *dp, std::string label);
+	virtual float getModelProbability(DataRow *dp, std::string label);
 protected:
 	virtual void trainModel();
 	StrValuesMap variances;

@@ -2,6 +2,7 @@
 #include <iostream>
 #include <cstdio>
 #include <boost/lexical_cast.hpp>
+#include <cmath>
 
 std::string inspect(std::vector<float> &v)
 {
@@ -16,7 +17,7 @@ std::string inspect(StrValuesMap &map)
 	std::string retVal = "(";
 	for (StrValuesMap::iterator it = map.begin(); it != map.end(); it++)
 	{
-		retVal += std::string("A") + std::string(": ") + inspect(it->second) + ", ";
+		retVal += std::string(it->first) + std::string(": ") + inspect(it->second) + ", ";
 	}
 	return retVal + ")";
 }
@@ -43,11 +44,40 @@ void NaiveBayes::setModel(ProbabilityModel *model)
 
 void NaiveBayes::eval()
 {
+	for (Data::iterator rowIt = testSet->begin(); rowIt != testSet->end() ; rowIt++)
+	{
+		DataRow &row = *rowIt;
+		StrVector labels = this->model->getLabels();
+		std::string maxLabel = labels[0];
+		float maxProb = 0.0f;
+		for (StrVector::iterator labelIt = labels.begin(); labelIt != labels.end(); labelIt++)
+		{
+			float prob = this->model->getProbability(&row, *labelIt);
+			if (prob > maxProb)
+			{
+				maxProb = prob;
+				maxLabel = *labelIt;
+			}
+		}
+		std::cout << maxLabel << std::endl;
+	}
 }
 
 void ProbabilityModel::setTrainSet(Data *trainSet) 
 {
 	this->trainSet = trainSet;
+}
+
+StrVector ProbabilityModel::getLabels()
+{
+	StrVector result;
+	for (StrFloatMap::iterator it = labelProbs.begin(); it != labelProbs.end(); it++)
+		result.push_back(it->first);
+	return result;
+}
+
+float ProbabilityModel::getProbability(DataRow *dp, std::string label) {
+	return labelProbs[label] * getModelProbability(dp, label);
 }
 
 void ProbabilityModel::train()
@@ -68,7 +98,7 @@ void ProbabilityModel::train()
 	for (StrFloatMap::iterator it=labelProbs.begin() ; it != labelProbs.end(); it++)
 	{
 		(*it).second = (*it).second / rowCount;
-		//std::cout << (*it).second << "\n";
+		std::cout << (*it).second << "\n";
 	}
 
 	trainModel();
@@ -110,14 +140,39 @@ void NormalModel::trainModel()
 	//obliczamy wariancję
 	for (StrValuesMap::iterator it = sums.begin(); it != sums.end(); it++)
 	{
-		variances[it->first] = std::vector<float>(it->second.size());
-		for (int i=0; i < it->second.size(); i++)
-			variances[it->first][i] = (sums[it->first][i] - labelCounts[it->first] * averages[it->first][i]) / labelCounts[it->first];
+		std::string label = it->first;
+		std::vector<float> &values = it->second; 
+		variances[label] = std::vector<float>(values.size());
+		for (int i=0; i < values.size(); i++)
+		{
+			variances[label][i] = 0.0f;
+			for (Data::iterator rowIt = trainSet->begin(); rowIt != trainSet->end() ; rowIt++)
+			{
+				if ((*rowIt).getLabel() == label)
+				{
+					float cum = powf((*rowIt).getValues()[i] - averages[label][i], 2);
+					variances[label][i] += cum;
+				}
+			}
+			variances[label][i] /= labelCounts[label];
+			
+		}
 	}
 	std::cout << inspect(variances) << std::endl;
 	std::cout << inspect(averages) << std::endl;
 }
 
-float NormalModel::getProbability(DataRow *dp, std::string label)
+float NormalModel::getModelProbability(DataRow *dp, std::string label)
 {
+	std::vector<float> average = averages[label];
+	std::vector<float> variance = variances[label];
+	float probability = 1.0f;
+	for (int i=0; i < average.size(); i++)
+	{
+		float y = powf(dp->getValues()[i] - average[i], 2.0f) / (2.0f * variance[i]);
+		float z = sqrtf(2.0f * 3.14f * variance[i]);
+		//std::cout << exp(-y) / z << std::endl;
+		probability *= exp(-y) / z;
+	}
+	return probability;
 }

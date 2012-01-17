@@ -9,6 +9,7 @@
 #include <fstream>
 #include "ReaderFactory.h"
 #include "ReaderCSV.h"
+#include "NaiveBayes.h"
 #include <boost/test/unit_test.hpp>
 #include <boost/test/included/unit_test_framework.hpp>
 #include <boost/test/test_tools.hpp>
@@ -37,6 +38,14 @@ BOOST_AUTO_TEST_CASE( testingDataCreation )
 	Data* d;
 	ifstream myfile ("example.txt");
 	d = myReader->read(myfile);
+	
+	NormalModel nm;
+	NaiveBayes nb;
+	nm.setTrainSet(d);
+	nm.train();
+	nb.setModel(&nm);
+	nb.setTestSet(d);
+	nb.eval();
 	
 	Data::iterator testRowIterator = d->begin();
 	
