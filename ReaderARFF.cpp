@@ -30,15 +30,14 @@ Data* ReaderARFF::read(std::istream& dataSource)
 	std::string classification;
 	std::string line;
 	Data* temp = new Data();
-	bool isDataSection = false;
+
 	while (std::getline(dataSource,line) && line != "@DATA")
 	{
-		//
+		//przejscie do sekcji data
 	}
-	std::cout  << line << std::endl;
+
 	while(std::getline(dataSource,line))
 	{
-		//std::cout<<line<<std::endl;
 		char_separator<char> sep(", ");
 		tokenizer <char_separator<char> > tokens(line, sep);
 		tokenizer <char_separator<char> >::iterator tok_iter_2 = tokens.begin();

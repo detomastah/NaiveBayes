@@ -24,43 +24,116 @@ BOOST_AUTO_TEST_CASE( testingReaderFactory )
 {
 	ReaderFactory testReaderFactory;
 	testReaderFactory.registerReader("CSV",new ReaderCSV());
-	Reader* myReader=testReaderFactory.create("CSV");
-	ReaderCSV* testCSVPointer = dynamic_cast<ReaderCSV*>(myReader);
+	testReaderFactory.registerReader("ARFF",new ReaderARFF());
+	
+	Reader* testCSVReader=testReaderFactory.create("CSV");
+	ReaderCSV* testCSVPointer = dynamic_cast<ReaderCSV*>(testCSVReader);
 	BOOST_CHECK(testCSVPointer);
-	BOOST_CHECK(false);
+	
+	Reader* testARFFReader=testReaderFactory.create("ARFF");
+	ReaderARFF* testARFFPointer = dynamic_cast<ReaderARFF*>(testARFFReader);
+	BOOST_CHECK(testARFFPointer);
 }
 
-BOOST_AUTO_TEST_CASE( testingDataCreation )
+void testData(Data *d) 
+{
+	Data::iterator testRowIterator = d->begin();
+	
+	if(testRowIterator == d->end())
+		BOOST_ERROR("ERROR: EMPTY DATA SET!");
+	
+	DataRow row = *testRowIterator;
+	BOOST_CHECK(row.getValues()[0] == 5.1f);
+	BOOST_CHECK(row.getValues()[1] == 3.5f);
+	BOOST_CHECK(row.getValues()[2] == 1.4f);
+	BOOST_CHECK(row.getValues()[3] == 0.2f);
+	
+	int rowCount = 0;
+	while (testRowIterator != d->end())
+	{
+		DataRow row = *testRowIterator;
+		testRowIterator++;
+		rowCount++;
+		
+	}
+	
+	BOOST_CHECK(rowCount == 150);
+}
+
+BOOST_AUTO_TEST_CASE( testingDataCSVDataLoading )
 {
 	ReaderFactory f;
 	f.registerReader("CSV",new ReaderCSV());
+	Reader* myReader=f.create("CSV");
+	
+	Data* d;
+	ifstream myfile ("test_helpers/iris.csv");
+	d = myReader->read(myfile);
+	
+	testData(d);
+}
+
+BOOST_AUTO_TEST_CASE( testingDataARFFDataLoading )
+{
+	ReaderFactory f;
 	f.registerReader("ARFF",new ReaderARFF());
 	Reader* myReader=f.create("ARFF");
 	
 	Data* d;
-	ifstream myfile ("iris.arff");
+	ifstream myfile ("test_helpers/iris.arff");
+	d = myReader->read(myfile);
+
+	testData(d);
+}
+
+class TestHelperNormalModel : public NormalModel
+{
+public:
+	virtual StrValuesMap& getVariances() { return NormalModel::variances; };
+	virtual StrValuesMap& getAverages() { return NormalModel::averages; };
+};
+
+BOOST_AUTO_TEST_CASE( testingNormalModel )
+{
+	ReaderFactory f;
+	f.registerReader("CSV",new ReaderCSV());
+	Reader* myReader = f.create("CSV");
+	
+	Data* d;
+	ifstream myfile ("test_helpers/iris.csv");
 	d = myReader->read(myfile);
 	
-	NormalModel nm;
+	BOOST_CHECK(d->begin() != d->end());
+	
+	int misclassified = 0;
+	
+	TestHelperNormalModel nm;
 	NaiveBayes nb;
 	nm.setTrainSet(d);
 	nm.train();
 	nb.setModel(&nm);
 	nb.setTestSet(d);
-	nb.eval();
+	std::vector<std::string> testRes = nb.eval();
 	
+	int rowNo = 0;
 	Data::iterator testRowIterator = d->begin();
-	
-	if(testRowIterator == d->end())
+	while (testRowIterator != d->end())
 	{
-		BOOST_ERROR("ERROR: EMPTY DATA SET!");
+		DataRow row = *testRowIterator;
+		if (row.getLabel() != testRes[rowNo])
+			misclassified ++;
+		testRowIterator++;
+		rowNo++;
 	}
-	
-	DataRow row = *testRowIterator;
-	
-	BOOST_CHECK(row.getValues()[0] == 1.1f);
-	BOOST_CHECK(row.getValues()[0] == 1.7f);
+	//std::cout << misclassified << std::endl;
+	BOOST_CHECK(misclassified < 15); //pozwalamy na 10% błąd klasyfikacji, efektywnie 6/150 błędnie sklasyfikowanych
 }
+
+
+
+/*
+
+ */
 
 test_suite* init_unit_test_suite( int, char* [] ) {
 	test_suite* test= BOOST_TEST_SUITE( "testingReaderFactory" );

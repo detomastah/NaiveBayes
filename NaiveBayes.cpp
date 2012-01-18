@@ -8,7 +8,7 @@ std::string inspect(std::vector<float> &v)
 {
 	std::string retVal = std::string("[");
 	for (std::vector<float>::iterator it = v.begin(); it != v.end(); it++)
-		retVal += boost::lexical_cast<std::string>(*it) + ", ";
+		retVal += boost::lexical_cast<std::string>(*it) + std::string(", ");
 	return retVal + std::string("]");
 }
 
@@ -17,7 +17,7 @@ std::string inspect(StrValuesMap &map)
 	std::string retVal = "(";
 	for (StrValuesMap::iterator it = map.begin(); it != map.end(); it++)
 	{
-		retVal += std::string(it->first) + std::string(": ") + inspect(it->second) + ", ";
+		retVal += std::string(it->first) + std::string(": ") + inspect(it->second) + std::string(", ");
 	}
 	return retVal + ")";
 }
@@ -27,7 +27,7 @@ std::string inspect(StrFloatMap &map)
 	std::string retVal = "(";
 	for (StrFloatMap::iterator it = map.begin(); it != map.end(); it++)
 	{
-		retVal += it->first + ": " + boost::lexical_cast<std::string>(it->second); + ", ";
+		retVal += std::string(it->first) + ": " + boost::lexical_cast<std::string>(it->second) + std::string(", ");
 	}
 	return retVal + ")";
 }
@@ -42,8 +42,9 @@ void NaiveBayes::setModel(ProbabilityModel *model)
 	 this->model = model;
 }
 
-void NaiveBayes::eval()
+std::vector<std::string> NaiveBayes::eval()
 {
+	std::vector<std::string> results;
 	for (Data::iterator rowIt = testSet->begin(); rowIt != testSet->end() ; rowIt++)
 	{
 		DataRow &row = *rowIt;
@@ -59,8 +60,9 @@ void NaiveBayes::eval()
 				maxLabel = *labelIt;
 			}
 		}
-		std::cout << maxLabel << std::endl;
+		results.push_back(maxLabel);
 	}
+	return results;
 }
 
 void ProbabilityModel::setTrainSet(Data *trainSet) 
@@ -98,7 +100,7 @@ void ProbabilityModel::train()
 	for (StrFloatMap::iterator it=labelProbs.begin() ; it != labelProbs.end(); it++)
 	{
 		(*it).second = (*it).second / rowCount;
-		std::cout << (*it).second << "\n";
+		//std::cout << (*it).second << "\n";
 	}
 
 	trainModel();
@@ -158,8 +160,8 @@ void NormalModel::trainModel()
 			
 		}
 	}
-	std::cout << inspect(variances) << std::endl;
-	std::cout << inspect(averages) << std::endl;
+	//std::cout << inspect(variances) << std::endl;
+	//std::cout << inspect(averages) << std::endl;
 }
 
 float NormalModel::getModelProbability(DataRow *dp, std::string label)

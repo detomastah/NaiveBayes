@@ -18,6 +18,7 @@ class Data;
 
 typedef std::list<DataRow>::iterator DataRowIterator;
 
+//pojedynczy wiersz
 class DataRow
 {
 public:
