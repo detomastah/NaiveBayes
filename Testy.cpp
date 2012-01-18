@@ -9,6 +9,7 @@
 #include <fstream>
 #include "ReaderFactory.h"
 #include "ReaderCSV.h"
+#include "ReaderARFF.h"
 #include "NaiveBayes.h"
 #include <boost/test/unit_test.hpp>
 #include <boost/test/included/unit_test_framework.hpp>
@@ -33,10 +34,11 @@ BOOST_AUTO_TEST_CASE( testingDataCreation )
 {
 	ReaderFactory f;
 	f.registerReader("CSV",new ReaderCSV());
-	Reader* myReader=f.create("CSV");
+	f.registerReader("ARFF",new ReaderARFF());
+	Reader* myReader=f.create("ARFF");
 	
 	Data* d;
-	ifstream myfile ("example.txt");
+	ifstream myfile ("iris.arff");
 	d = myReader->read(myfile);
 	
 	NormalModel nm;

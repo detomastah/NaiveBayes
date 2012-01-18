@@ -14,6 +14,7 @@
 
 class Reader;
 class DataRow;
+class Data;
 
 typedef std::list<DataRow>::iterator DataRowIterator;
 
@@ -24,14 +25,12 @@ public:
 	const std::vector<float>& getValues();
 	void setLabel(std::string label);
 	std::string getLabel();
-	
 protected:
 	std::vector<float> values;
 	std::string label;
 };
 
 class Data {
-	friend class Reader;
 public:
 	Data();
 	void addRow(DataRow row);
